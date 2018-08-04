@@ -1,6 +1,7 @@
 package in.codingninjas.envision.contentproviders;
 
 import android.content.ContentProvider;
+import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.UriMatcher;
 import android.database.Cursor;
@@ -47,18 +48,27 @@ public class MoviesProvider extends ContentProvider {
 
         int match = matcher.match(uri);
 
+        Uri output = null;
+
         switch (match){
 
             case CODE_MOVIES:
                 long moviewId = openHelper.getWritableDatabase().insert(MoviesContract.Movies.TABLE_NAME,null,values);
-                return MoviesContract.Movies.buildUriForId(moviewId);
+                output =  MoviesContract.Movies.buildUriForId(moviewId);
+                break;
             case CODE_REVIES:
                 long reviewId = openHelper.getWritableDatabase().insert(MoviesContract.Reviews.TABLE_NAME,null,values);
-                return MoviesContract.Reviews.buildUriForId(reviewId);
+                output =  MoviesContract.Reviews.buildUriForId(reviewId);
+                break;
+
 
         }
 
-        return null;
+        if(output != null){
+            getContext().getContentResolver().notifyChange(uri,null);
+        }
+
+        return output;
     }
 
     @Override
@@ -71,21 +81,27 @@ public class MoviesProvider extends ContentProvider {
     public Cursor query(Uri uri, String[] projection, String selection,
                         String[] selectionArgs, String sortOrder) {
 
+
+        Cursor output = null;
         int match = matcher.match(uri);
         switch (match){
 
             case CODE_MOVIES:
-                return openHelper.getReadableDatabase().query(MoviesContract.Movies.TABLE_NAME,projection,selection,selectionArgs,null,null,sortOrder);
+                output = openHelper.getReadableDatabase().query(MoviesContract.Movies.TABLE_NAME,projection,selection,selectionArgs,null,null,sortOrder);
+                break;
             case CODE_REVIES:
-                return openHelper.getReadableDatabase().query(MoviesContract.Reviews.TABLE_NAME,projection,selection,selectionArgs,null,null,sortOrder);
+                output = openHelper.getReadableDatabase().query(MoviesContract.Reviews.TABLE_NAME,projection,selection,selectionArgs,null,null,sortOrder);
+                break;
             case CODE_MOVIE:
                 String id = uri.getLastPathSegment();
                 String[] args = {id};
-                return openHelper.getReadableDatabase().query(MoviesContract.Movies.TABLE_NAME,projection, MoviesContract.Movies._ID + " = ?",args,null,null,sortOrder);
-
-
+                output = openHelper.getReadableDatabase().query(MoviesContract.Movies.TABLE_NAME,projection, MoviesContract.Movies._ID + " = ?",args,null,null,sortOrder);
+                break;
         }
-        return  null;
+        if(output != null){
+            output.setNotificationUri(getContext().getContentResolver(),uri);
+        }
+        return  output;
 
     }
 

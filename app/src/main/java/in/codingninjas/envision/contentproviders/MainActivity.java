@@ -5,7 +5,11 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.ContactsContract;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.CursorLoader;
+import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -16,7 +20,7 @@ import android.widget.Toast;
 import java.util.ArrayList;
 import java.util.UUID;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor> {
 
     ListView listView;
     ArrayList<String> items = new ArrayList<>();
@@ -31,7 +35,9 @@ public class MainActivity extends AppCompatActivity {
         adapter = new ArrayAdapter<>(this,android.R.layout.simple_list_item_1,items);
         listView.setAdapter(adapter);
 
-        fetchMovies();
+        //fetchMovies();
+
+        LoaderManager.getInstance(this).initLoader(1,null,this);
 
        // fetchContacts();
     }
@@ -59,8 +65,8 @@ public class MainActivity extends AppCompatActivity {
         ContentValues values = new ContentValues();
         values.put(MoviesContract.Movies.NAME,movie.getName());
         values.put(MoviesContract.Movies.OVERVIEW,movie.getOverview());
-        items.add(movie.getName());
-        adapter.notifyDataSetChanged();
+//        items.add(movie.getName());
+//        adapter.notifyDataSetChanged();
 
        getContentResolver().insert(MoviesContract.Movies.CONENT_URI,values);
     }
@@ -97,5 +103,28 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(this,name,Toast.LENGTH_LONG).show();
             }
         }
+    }
+
+    @NonNull
+    @Override
+    public Loader<Cursor> onCreateLoader(int i, @Nullable Bundle bundle) {
+        return new CursorLoader(this, MoviesContract.Movies.CONENT_URI,null,null,null,null);
+    }
+
+    @Override
+    public void onLoadFinished(@NonNull Loader<Cursor> loader, Cursor cursor) {
+        if(cursor != null){
+            items.clear();
+            while (cursor.moveToNext()){
+                String name = cursor.getString(cursor.getColumnIndex(MoviesContract.Movies.NAME));
+                items.add(name);
+            }
+            adapter.notifyDataSetChanged();
+        }
+    }
+
+    @Override
+    public void onLoaderReset(@NonNull Loader<Cursor> loader) {
+
     }
 }
