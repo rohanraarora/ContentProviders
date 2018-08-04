@@ -1,5 +1,6 @@
 package in.codingninjas.envision.contentproviders;
 
+import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
@@ -13,6 +14,7 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -29,15 +31,45 @@ public class MainActivity extends AppCompatActivity {
         adapter = new ArrayAdapter<>(this,android.R.layout.simple_list_item_1,items);
         listView.setAdapter(adapter);
 
+        fetchMovies();
+
        // fetchContacts();
     }
 
     public void onButtonPress(View view){
+       addMovie();
+
+    }
+
+    public void fetchMovies(){
+        Cursor cursor = getContentResolver().query(MoviesContract.Movies.CONENT_URI,null,null,null,null);
+        if(cursor != null){
+            items.clear();
+            while (cursor.moveToNext()){
+                String name = cursor.getString(cursor.getColumnIndex(MoviesContract.Movies.NAME));
+                items.add(name);
+            }
+            adapter.notifyDataSetChanged();
+        }
+    }
+
+
+    public void addMovie(){
+        Movie movie = new Movie("Movie:" + UUID.randomUUID(),"overview");
+        ContentValues values = new ContentValues();
+        values.put(MoviesContract.Movies.NAME,movie.getName());
+        values.put(MoviesContract.Movies.OVERVIEW,movie.getOverview());
+        items.add(movie.getName());
+        adapter.notifyDataSetChanged();
+
+       getContentResolver().insert(MoviesContract.Movies.CONENT_URI,values);
+    }
+
+    public void startContactsActivity(){
         Intent intent =new Intent();
         intent.setAction(Intent.ACTION_PICK);
         intent.setType(ContactsContract.CommonDataKinds.Phone.CONTENT_TYPE);
         startActivityForResult(intent,1);
-
     }
 
 
